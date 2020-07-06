@@ -1,6 +1,57 @@
+#!usr/bin/env python3
 #NOTE: Amino Acid = AA
 
 from openpyxl import load_workbook
+
+def get_KD_original():
+    """ Function which returns the original KD hydropathy lookup table
+    """    
+    
+    return  {'ILE': 4.5,                
+             'VAL': 4.2,
+             'LEU': 3.8,
+             'PHE': 2.8,
+             'CYS': 2.5,
+             'MET': 1.9,
+             'ALA': 1.8,
+             'GLY': -0.4,
+             'THR': -0.7,
+             'SER': -0.8,
+             'TRP': -0.9,
+             'TYR': -1.3,
+             'PRO': -1.6,
+             'HIS': -3.2,
+             'GLU': -3.5,
+             'GLN': -3.5,
+             'ASP': -3.5,
+             'ASN': -3.5,
+             'LYS': -3.9,
+             'ARG': -4.5}
+
+def get_residue_charge():
+    """ Function which returns the original KD hydropathy lookup table
+    """    
+    
+    return  {'ILE': 0,                
+             'VAL': 0,
+             'LEU': 0,
+             'PHE': 0,
+             'CYS': 0,
+             'MET': 0,
+             'ALA': 0,
+             'GLY': 0,
+             'THR': 0,
+             'SER': 0,
+             'TRP': 0,
+             'TYR': 0,
+             'PRO': 0,
+             'HIS': 0,
+             'GLU': -1,
+             'GLN': 0,
+             'ASP': -1,
+             'ASN': 0,
+             'LYS': 1,
+             'ARG': 1}
 
 aminoacids = {'G': 0, 'A': 0, 'V': 0, 'C': 0, 'P': 0, 'L': 0,
               'I': 0, 'M': 0, 'W': 0, 'F': 0, 'K': 1, 'R': 1,
@@ -9,6 +60,7 @@ aminoacids = {'G': 0, 'A': 0, 'V': 0, 'C': 0, 'P': 0, 'L': 0,
 
 #Calculates NCPR by adding all the charges of each AA
 #and dividing by the total number of AAs in the Sequence
+'''
 def CalculateNCPR(Sequence):
     x = 0
     totalCharge = 0
@@ -26,7 +78,14 @@ def CalculateNCPR(Sequence):
         x+=1
     NCPR = totalCharge/len(Sequence)
     return NCPR
-
+'''
+def CalculateNCPR(Sequence):
+    totalCharge = 0
+    for AA in Sequence:
+        Charge = aminoacids[AA]
+        totalCharge += Charge
+    NCPR = totalCharge/len(Sequence)
+    return NCPR
 #Checks ID from "metastatic and primary CDR3s b" sheet to find match in "DNAH9"
 #If match is found returns Reference_Allele, Tumor_Seq_Allele1, Tumor_Seq_Allele2
 def CheckID(ID,sheet2):
@@ -56,6 +115,7 @@ def Calc_AA_Charge_Δ(Ref_AA,TAA1,TAA2):
 
 #If AA_Charge_Δ = 0 multiplying makes NCPR_CS 0, so if  AA_Charge_Δ = 0
 #AA_Charge_Δ is exluded from calculations
+
 def Calc_NCPR_CS(AA_Charge_Δ,NCPR):
     if AA_Charge_Δ == "N/A":
         return "N/A"
