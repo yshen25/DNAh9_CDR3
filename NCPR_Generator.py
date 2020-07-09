@@ -7,82 +7,59 @@ def get_KD_original():
     """ Function which returns the original KD hydropathy lookup table
     """    
     
-    return  {'ILE': 4.5,                
-             'VAL': 4.2,
-             'LEU': 3.8,
-             'PHE': 2.8,
-             'CYS': 2.5,
-             'MET': 1.9,
-             'ALA': 1.8,
-             'GLY': -0.4,
-             'THR': -0.7,
-             'SER': -0.8,
-             'TRP': -0.9,
-             'TYR': -1.3,
-             'PRO': -1.6,
-             'HIS': -3.2,
-             'GLU': -3.5,
-             'GLN': -3.5,
-             'ASP': -3.5,
-             'ASN': -3.5,
-             'LYS': -3.9,
-             'ARG': -4.5}
+    return  {'I': 4.5,                
+             'V': 4.2,
+             'L': 3.8,
+             'F': 2.8,
+             'C': 2.5,
+             'M': 1.9,
+             'A': 1.8,
+             'G': -0.4,
+             'T': -0.7,
+             'S': -0.8,
+             'W': -0.9,
+             'Y': -1.3,
+             'P': -1.6,
+             'H': -3.2,
+             'E': -3.5,
+             'Q': -3.5,
+             'D': -3.5,
+             'N': -3.5,
+             'K': -3.9,
+             'R': -4.5}
 
-def get_residue_charge():
+def get_AA_charge(AA):
     """ Function which returns the original KD hydropathy lookup table
     """    
     
-    return  {'ILE': 0,                
-             'VAL': 0,
-             'LEU': 0,
-             'PHE': 0,
-             'CYS': 0,
-             'MET': 0,
-             'ALA': 0,
-             'GLY': 0,
-             'THR': 0,
-             'SER': 0,
-             'TRP': 0,
-             'TYR': 0,
-             'PRO': 0,
-             'HIS': 0,
-             'GLU': -1,
-             'GLN': 0,
-             'ASP': -1,
-             'ASN': 0,
-             'LYS': 1,
-             'ARG': 1}
-
-aminoacids = {'G': 0, 'A': 0, 'V': 0, 'C': 0, 'P': 0, 'L': 0,
-              'I': 0, 'M': 0, 'W': 0, 'F': 0, 'K': 1, 'R': 1,
-              'H': .1, 'S': 0, 'T': 0, 'Y': 0, 'N': 0, 'Q': 0,
-              'D': -1, 'E': -1}
+    AA_Charge_Table =    {'I': 0,                
+             'V': 0,
+             'L': 0,
+             'F': 0,
+             'C': 0,
+             'M': 0,
+             'A': 0,
+             'G': 0,
+             'T': 0,
+             'S': 0,
+             'W': 0,
+             'Y': 0,
+             'P': 0,
+             'H': .1,
+             'E': -1,
+             'Q': 0,
+             'D': -1,
+             'N': 0,
+             'K': 1,
+             'R': 1}
+    return AA_Charge_Table[AA]
 
 #Calculates NCPR by adding all the charges of each AA
 #and dividing by the total number of AAs in the Sequence
-'''
-def CalculateNCPR(Sequence):
-    x = 0
-    totalCharge = 0
-    while x < len(Sequence):
-        try:
-            if x != 0:
-                AA = Sequence[x-1:x]
-            else:
-                AA = Sequence[0]
-            Charge = aminoacids[AA]
-            totalCharge += Charge
-        except:
-            print(Sequence[x-1:x]+" is not an Amino Acid. Please check your sequence and try again")
-            exit()
-        x+=1
-    NCPR = totalCharge/len(Sequence)
-    return NCPR
-'''
 def CalculateNCPR(Sequence):
     totalCharge = 0
     for AA in Sequence:
-        Charge = aminoacids[AA]
+        Charge = get_AA_charge(AA)
         totalCharge += Charge
     NCPR = totalCharge/len(Sequence)
     return NCPR
@@ -90,27 +67,21 @@ def CalculateNCPR(Sequence):
 #If match is found returns Reference_Allele, Tumor_Seq_Allele1, Tumor_Seq_Allele2
 def CheckID(ID,sheet2):
     for y in range(2, sheet2.max_row + 1):
-        ID2 = sheet2["O{cellRow}".format(cellRow = y)].value
+        ID2 = sheet2["A{cellRow}".format(cellRow = y)].value
         if ID == ID2:
-            Mutation_Type = sheet2["H{cellRow}".format(cellRow = y)].value
-            if Mutation_Type != "Missense_Mutation":
-                return "N/A", "N/A", "N/A"
-            Reference_Allele = sheet2["J{cellRow}".format(cellRow = y)].value
-            Tumor_Seq_Allele1 = sheet2["K{cellRow}".format(cellRow = y)].value
-            Tumor_Seq_Allele2 = sheet2["L{cellRow}".format(cellRow = y)].value
-            return Reference_Allele, Tumor_Seq_Allele1, Tumor_Seq_Allele2
-    return "N/A", "N/A", "N/A"
+            AminoAcids = sheet2["C{cellRow}".format(cellRow = y)].value
+            Reference_Allele = AminoAcids[0]
+            Tumor_Seq_Allele = AminoAcids[2]
+            return Reference_Allele, Tumor_Seq_Allele
+    return "N/A", "N/A"
 
 #Calculates Change in Charge by checking the change in charge of the
 #Tumor_Seq_Allele1(TAA1) and Tumor_Seq_Allele2(TAA2) against the Reference Allele(Ref_AA)
-def Calc_AA_Charge_Δ(Ref_AA,TAA1,TAA2):
+def Calc_AA_Charge_Δ(Ref_AA,TAA):
     if Ref_AA == "N/A":
         return "N/A"
-    if TAA1 != "-":
-        AA_Charge_Δ = aminoacids[TAA1]-aminoacids[Ref_AA]
-    if TAA2 != "-":
-        AA_Charge_Δ = aminoacids[TAA2]-aminoacids[Ref_AA]
-    print(AA_Charge_Δ)
+    if TAA != "-":
+        AA_Charge_Δ = get_AA_charge(TAA)-get_AA_charge(Ref_AA)
     return AA_Charge_Δ
 
 #If AA_Charge_Δ = 0 multiplying makes NCPR_CS 0, so if  AA_Charge_Δ = 0
@@ -132,21 +103,20 @@ for x in range(2, sheet.max_row + 1):
     #Grab Patient ID
     Patient_ID = sheet["A{cellRow}".format(cellRow = x)].value
     #Checks ID for Match in DHA9
-    Ref_Allele, Tumor_Seq_Allele1, Tumor_Seq_Allele2 = CheckID(Patient_ID,sheet2)
+    Ref_Allele, Tumor_Seq_Allele = CheckID(Patient_ID,sheet2)
     #Calculates Change in Charge of AA
-    AA_Charge_Δ = Calc_AA_Charge_Δ(Ref_Allele,Tumor_Seq_Allele1,Tumor_Seq_Allele2)
+    AA_Charge_Δ = Calc_AA_Charge_Δ(Ref_Allele,Tumor_Seq_Allele)
     #Calculates NCPR
-    NCPR = CalculateNCPR(sheet["Q{cellRow}".format(cellRow = x)].value)
+    NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
     #Calculates NCPR excluding AA_Charge_Δ when AA_Charge_Δ = 0
     NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR)
 
     #Assigns all values to rows in new datasheet
-    sheet["U{cellRow}".format(cellRow = x)] = Ref_Allele
-    sheet["V{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele1
-    sheet["W{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele2
-    sheet["X{cellRow}".format(cellRow = x)] = AA_Charge_Δ
-    sheet["T{cellRow}".format(cellRow = x)] = NCPR
-    sheet["Y{cellRow}".format(cellRow = x)] = NCPR_CS
+    sheet["E{cellRow}".format(cellRow = x)] = Ref_Allele
+    sheet["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
+    sheet["G{cellRow}".format(cellRow = x)] = AA_Charge_Δ
+    sheet["D{cellRow}".format(cellRow = x)] = NCPR
+    sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
