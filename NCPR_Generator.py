@@ -65,7 +65,7 @@ def CalculateNCPR(Sequence):
     return NCPR
 #Checks ID from "metastatic and primary CDR3s b" sheet to find match in "DNAH9"
 #If match is found returns Reference_Allele, Tumor_Seq_Allele1, Tumor_Seq_Allele2
-def CheckID(ID,sheet2):
+def CheckID(ID,sheet3):
     for y in range(2, sheet2.max_row + 1):
         ID2 = sheet2["A{cellRow}".format(cellRow = y)].value
         if ID == ID2:
@@ -74,6 +74,15 @@ def CheckID(ID,sheet2):
             Tumor_Seq_Allele = AminoAcids[2]
             return Reference_Allele, Tumor_Seq_Allele
     return "N/A", "N/A"
+
+def CheckID2(ID,sheet3):
+    for y in range(2, sheet3.max_row + 1):
+        ID2 = sheet3["B{cellRow}".format(cellRow = y)].value
+        if ID == ID2:
+            daysLeft = sheet3["J{cellRow}".format(cellRow = y)].value
+            #print(daysLeft)
+            return daysLeft
+    return "N/A"
 
 #Calculates Change in Charge by checking the change in charge of the
 #Tumor_Seq_Allele1(TAA1) and Tumor_Seq_Allele2(TAA2) against the Reference Allele(Ref_AA)
@@ -88,6 +97,7 @@ def Calc_AA_Charge_Δ(Ref_AA,TAA):
 #AA_Charge_Δ is exluded from calculations
 
 def Calc_NCPR_CS(AA_Charge_Δ,NCPR):
+    '''A positive value denotes a complementary score'''
     if AA_Charge_Δ == "N/A":
         return "N/A"
     elif AA_Charge_Δ == 0:
@@ -98,6 +108,7 @@ def Calc_NCPR_CS(AA_Charge_Δ,NCPR):
 workbook = load_workbook(filename="Dataset.xlsx")
 sheet = workbook['metastatic and primary CDR3s b']
 sheet2 = workbook['DNAH9']
+sheet3 = workbook['clinical']
 
 for x in range(2, sheet.max_row + 1):
     #Grab Patient ID
@@ -106,17 +117,21 @@ for x in range(2, sheet.max_row + 1):
     Ref_Allele, Tumor_Seq_Allele = CheckID(Patient_ID,sheet2)
     #Calculates Change in Charge of AA
     AA_Charge_Δ = Calc_AA_Charge_Δ(Ref_Allele,Tumor_Seq_Allele)
+    #Finds days to death
+    daysLeft = CheckID2(Patient_ID,sheet3)
     #Calculates NCPR
     NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
     #Calculates NCPR excluding AA_Charge_Δ when AA_Charge_Δ = 0
     NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR)
-
+    #print(daysLeft)
     #Assigns all values to rows in new datasheet
     sheet["E{cellRow}".format(cellRow = x)] = Ref_Allele
     sheet["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
     sheet["G{cellRow}".format(cellRow = x)] = AA_Charge_Δ
     sheet["D{cellRow}".format(cellRow = x)] = NCPR
     sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
+    sheet["I{cellRow}".format(cellRow = x)] = daysLeft
+    
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
