@@ -3,6 +3,15 @@
 
 from openpyxl import load_workbook
 
+"""AliveStillComp = {}
+AliveStillNon = {}
+
+x = 0
+while x < 501:
+    AliveStillComp[x] = 0
+    AliveStillNon[x] = 0
+    x+=1"""
+
 def get_KD_original():
     """ Function which returns the original KD hydropathy lookup table
     """    
@@ -32,7 +41,7 @@ def get_AA_charge(AA):
     """ Function which returns the original KD hydropathy lookup table
     """    
     
-    AA_Charge_Table =    {'I': 0,                
+    AA_Charge_Table = {'I': 0,                
              'V': 0,
              'L': 0,
              'F': 0,
@@ -75,13 +84,20 @@ def CheckID(ID,sheet3):
             return Reference_Allele, Tumor_Seq_Allele
     return "N/A", "N/A"
 
-def CheckID2(ID,sheet3):
+def aliveStillComp(MonthsLeft):
+    AliveStillComp[MonthsLeft] = AliveStillComp[MonthsLeft] - 1
+def aliveStillNon(MonthsLeft):
+    AliveStillNon[MonthsLeft] = AliveStillNon[MonthsLeft] - 1
+
+def MonthsLeftFunc(ID,sheet3):
     for y in range(2, sheet3.max_row + 1):
         ID2 = sheet3["B{cellRow}".format(cellRow = y)].value
         if ID == ID2:
             daysLeft = sheet3["J{cellRow}".format(cellRow = y)].value
-            #print(daysLeft)
-            return daysLeft
+            try:
+                return int(daysLeft/30)
+            except:
+                return daysLeft
     return "N/A"
 
 #Calculates Change in Charge by checking the change in charge of the
@@ -105,6 +121,35 @@ def Calc_NCPR_CS(AA_Charge_Δ,NCPR):
     NCPR_CS = AA_Charge_Δ * NCPR * -1
     return NCPR_CS
 
+def MakeTrue(Patient_ID,sheet):
+    for x in range(2, sheet.max_row + 1):
+        if Patient_ID == sheet["A{cellRow}".format(cellRow = x)].value:
+            sheet["J{cellRow}".format(cellRow = x)] = True
+
+"""def PercentAlive(sheet,sheet4):
+    x = 2
+    while x < sheet.max_row:
+        Patient_ID = sheet["A{cellRow}".format(cellRow = x)].value
+        MonthsLeft = sheet["I{cellRow}".format(cellRow = x)].value
+        Complimentary = sheet["J{cellRow}".format(cellRow = x)].value
+        while Patient_ID == sheet["A{cellRow}".format(cellRow = x)].value:
+            x+=1
+        if MonthsLeft != "'--":
+            if Complimentary == True:
+                AliveStillComp[MonthsLeft] = AliveStillComp[MonthsLeft] + 1
+            else:
+                AliveStillNon[MonthsLeft] = AliveStillNon[MonthsLeft] + 1
+    x = 3
+    CompCurrent = 315
+    NonCompCurrent = 315
+
+    while x <= 500:
+        CompCurrent -= AliveStillComp[x]
+        NonCompCurrent -= AliveStillNon[x]
+        sheet4["B{cellRow}".format(cellRow = x)] = CompCurrent/315*100
+        sheet4["D{cellRow}".format(cellRow = x)] = NonCompCurrent/315*100
+        x += 1"""
+
 workbook = load_workbook(filename="Dataset.xlsx")
 sheet = workbook['metastatic and primary CDR3s b']
 sheet2 = workbook['DNAH9']
@@ -118,20 +163,32 @@ for x in range(2, sheet.max_row + 1):
     #Calculates Change in Charge of AA
     AA_Charge_Δ = Calc_AA_Charge_Δ(Ref_Allele,Tumor_Seq_Allele)
     #Finds days to death
-    daysLeft = CheckID2(Patient_ID,sheet3)
+    MonthsLeft = MonthsLeftFunc(Patient_ID,sheet3)
     #Calculates NCPR
     NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
     #Calculates NCPR excluding AA_Charge_Δ when AA_Charge_Δ = 0
     NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR)
-    #print(daysLeft)
+    #Calculate Complimentary Value
+    if sheet["J{cellRow}".format(cellRow = x)].value != True:
+        if NCPR_CS != "N/A" and NCPR_CS > 0:
+            MakeTrue(Patient_ID,sheet)
+        else:
+            sheet["J{cellRow}".format(cellRow = x)] = False
     #Assigns all values to rows in new datasheet
     sheet["E{cellRow}".format(cellRow = x)] = Ref_Allele
     sheet["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
     sheet["G{cellRow}".format(cellRow = x)] = AA_Charge_Δ
     sheet["D{cellRow}".format(cellRow = x)] = NCPR
     sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
-    sheet["I{cellRow}".format(cellRow = x)] = daysLeft
-    
+    sheet["I{cellRow}".format(cellRow = x)] = MonthsLeft
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
+
+"""workbook = load_workbook(filename="EditedDataset.xlsx")
+sheet = workbook['metastatic and primary CDR3s b']
+sheet4 = workbook['PatientSurvivalChart']
+
+PercentAlive(sheet,sheet4)
+
+workbook.save(filename="EditedDataset2.xlsx")"""
