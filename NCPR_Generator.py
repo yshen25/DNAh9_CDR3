@@ -31,6 +31,8 @@ for x in range(2, sheet.max_row + 1):
             sheet["J{cellRow}".format(cellRow = x)] = False
         else:
             sheet["J{cellRow}".format(cellRow = x)] = "N/A"
+    #Finds position of Mutation
+    MutationPosition = MutationPos(Patient_ID)
     #Assigns all values to rows in new datasheet
     sheet["E{cellRow}".format(cellRow = x)] = Ref_Allele
     sheet["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
@@ -38,6 +40,7 @@ for x in range(2, sheet.max_row + 1):
     sheet["D{cellRow}".format(cellRow = x)] = NCPR
     sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
     sheet["I{cellRow}".format(cellRow = x)] = MonthsLeft
+    sheet["K{cellRow}".format(cellRow = x)] = MutationPosition
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
