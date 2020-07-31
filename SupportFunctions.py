@@ -202,7 +202,6 @@ def PeptidesFunc(mutNumber):
             PossiblePeptides[y] = peptides[x]
             y+=1
         x += 1
-    print(PossiblePeptides)
     return PossiblePeptides
 
 
@@ -253,6 +252,10 @@ def LeftorRight(mutNumber):
         return "Right"
     elif Left > Right:
         return "Left"
-            
-PeptidesFunc(770)
+    elif Left == Right and Right != 0  and Left != 0:
+        return "Neither"
+    elif PossiblePeptides == {}:
+        return "No Peptides"
+    else:
+        print("blank")
 
