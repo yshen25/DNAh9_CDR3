@@ -41,6 +41,7 @@ for x in range(2, sheet.max_row + 1):
     sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
     sheet["I{cellRow}".format(cellRow = x)] = MonthsLeft
     sheet["K{cellRow}".format(cellRow = x)] = MutationPosition
+    sheet["L{cellRow}".format(cellRow = x)] = LeftorRight(MutationPosition)
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
