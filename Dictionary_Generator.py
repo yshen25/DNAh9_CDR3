@@ -68,8 +68,7 @@ for Patient_ID in Major_Dictionary:
                     Major_Dictionary[Patient_ID]["Complimentary"] = True
                     break
         if MutationSide == "N/A":
-            print("Mutation Side N/A")
-            quit
+            print("No Peptides", Patient_ID, Mutation)
 print(Major_Dictionary)
 
 

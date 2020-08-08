@@ -37,29 +37,6 @@ def CalculateNCPR(Sequence):
     NCPR = totalCharge/len(Sequence)
     return NCPR
 
-def MutationPos(ID):
-    for y in range(2, sheet2.max_row + 1):
-        ID2 = sheet2["A{cellRow}".format(cellRow = y)].value
-        if ID == ID2:
-            MutPos = sheet2["E{cellRow}".format(cellRow = y)].value
-            MutPos = MutPos[1:len(MutPos)-1]
-            return MutPos
-    return "N/A"
-
-def CheckID(ID,sheet):
-    """ Checks ID from "metastatic and primary CDR3s b" sheet
-    to find match in "DNAH9". If match is found returns Reference_Allele,
-    Tumor_Seq_Allele1, Tumor_Seq_Allele2
-    """ 
-    for y in range(2, sheet.max_row + 1):
-        ID2 = sheet["A{cellRow}".format(cellRow = y)].value
-        if ID == ID2:
-            AminoAcids = sheet2["C{cellRow}".format(cellRow = y)].value
-            Reference_Allele = AminoAcids[0]
-            Tumor_Seq_Allele = AminoAcids[2]
-            return Reference_Allele, Tumor_Seq_Allele
-    return "N/A", "N/A"
-
 def MonthsLeftFunc(ID):
     """Function to find the number of days a patient survived
     and return it in months. (One month equals 30 days)
@@ -74,36 +51,6 @@ def MonthsLeftFunc(ID):
             except:
                 return daysLeft
     return "N/A"
-
-def Calc_AA_Charge_Δ(Ref_AA,TAA):
-    """Function to Calculates Change in Charge by checking the
-    change in charge of the Tumor_Seq_Allele1(TAA1) and
-    Tumor_Seq_Allele2(TAA2) against the Reference Allele(Ref_AA)
-    """
-    if Ref_AA == "N/A":
-        return "N/A"
-    if TAA != "-":
-        AA_Charge_Δ = get_AA_charge(TAA)-get_AA_charge(Ref_AA)
-    return AA_Charge_Δ
-
-#If AA_Charge_Δ = 0 multiplying makes NCPR_CS 0, so if  AA_Charge_Δ = 0
-#AA_Charge_Δ is exluded from calculations
-
-def Calc_NCPR_CS(AA_Charge_Δ,NCPR,Patient_ID):
-    """Function to calculate NCPR by 
-    """
-    '''A positive value denotes a complementary score'''
-    if AA_Charge_Δ == "N/A":
-        return "N/A"
-    NCPR_CS = AA_Charge_Δ * NCPR * -1
-    return NCPR_CS
-
-def MakeTrue(Patient_ID,sheet):
-    """Function makes all instances of the Patient ID in metastatic
-    and primary CDR3s b True"""
-    for x in range(2, sheet.max_row + 1):
-        if Patient_ID == sheet["A{cellRow}".format(cellRow = x)].value:
-            sheet["J{cellRow}".format(cellRow = x)] = True
 
 def PercentAlive(sheet,sheet4):
     """Function to calculate the survival charts"""
@@ -224,7 +171,6 @@ def PeptidesFunc(mutNumber):
             PossiblePeptides[y] = peptides[x]
             y+=1
         x += 1
-    #print(PossiblePeptides)
     return PossiblePeptides
 
 
@@ -264,33 +210,9 @@ def LeftorRight(mutNumber):
     elif Right != 0  and Left != 0:
         return "Both"
     elif Right == 0 and Left == 0:
-        print("N/A")
         return "N/A"
     else:
         print("blank")
-
-'''def Complimentary_Func(ID,AA_Charge_Δ,LorR):
-    NCPR=0
-    for x in range(2, sheet.max_row + 1):
-        ID2 = sheet["A{cellRow}".format(cellRow = x)].value
-        if ID2 == ID:
-            if LorR = "Left" and sheet["C{cellRow}".format(cellRow = x)].value == "TRA":
-                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
-                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
-                if NCPR_CS != "N/A" and NCPR_CS > 0:
-                    return "True"
-            elif LorR = "Right" and sheet["C{cellRow}".format(cellRow = x)].value == "TRB":
-                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
-                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
-                if NCPR_CS != "N/A" and NCPR_CS > 0:
-                    return "True"
-            elif LorR = "Both":
-                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
-                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
-                if NCPR_CS != "N/A" and NCPR_CS > 0:
-                    return "True"
-    return "False"
-'''
 
 def ComplimentaryFunction(CDR3,Mutation):
     '''A positive value denotes a complementary score'''
