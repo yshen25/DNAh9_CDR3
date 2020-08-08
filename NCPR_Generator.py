@@ -9,39 +9,33 @@ sheet = workbook['metastatic and primary CDR3s b']
 sheet2 = workbook['DNAH9']
 sheet3 = workbook['clinical']
 sheet4 = workbook['PatientSurvivalChart']
+sheet5 = workbook['Data']
 
-for x in range(2, sheet.max_row + 1):
+for x in range(2, sheet2.max_row + 1):
     #Grab Patient ID
-    Patient_ID = sheet["A{cellRow}".format(cellRow = x)].value
-    #Checks ID for Match in DHA9
-    Ref_Allele, Tumor_Seq_Allele = CheckID(Patient_ID,sheet2)
+    Patient_ID = sheet2["A{cellRow}".format(cellRow = x)].value
+    #Gets Amino Acid Changes
+    Mutation = sheet2["E{cellRow}".format(cellRow = x)].value
+    Ref_Allele = Mutation[0]
+    Tumor_Seq_Allele = Mutation[len(Mutation)]
+    #Calculates LorR
+    LorR = LeftorRight()
     #Calculates Change in Charge of AA
     AA_Charge_Δ = Calc_AA_Charge_Δ(Ref_Allele,Tumor_Seq_Allele)
     #Finds days to death
     MonthsLeft = MonthsLeftFunc(Patient_ID,sheet3)
     #Calculates NCPR
-    NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
-    #Calculates NCPR excluding AA_Charge_Δ when AA_Charge_Δ = 0
-    NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,Patient_ID)
-    #Calculate Complimentary Value
-    if sheet["J{cellRow}".format(cellRow = x)].value != True:
-        if NCPR_CS != "N/A" and NCPR_CS > 0:
-            MakeTrue(Patient_ID,sheet)
-        elif NCPR_CS != "N/A":
-            sheet["J{cellRow}".format(cellRow = x)] = False
-        else:
-            sheet["J{cellRow}".format(cellRow = x)] = "N/A"
-    #Finds position of Mutation
-    MutationPosition = MutationPos(Patient_ID)
+    Complimentary_Func(Patient_ID,AA_Charge_Δ,LorR)
     #Assigns all values to rows in new datasheet
-    sheet["E{cellRow}".format(cellRow = x)] = Ref_Allele
-    sheet["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
-    sheet["G{cellRow}".format(cellRow = x)] = AA_Charge_Δ
-    sheet["D{cellRow}".format(cellRow = x)] = NCPR
-    sheet["H{cellRow}".format(cellRow = x)] = NCPR_CS
-    sheet["I{cellRow}".format(cellRow = x)] = MonthsLeft
-    sheet["K{cellRow}".format(cellRow = x)] = MutationPosition
-    sheet["L{cellRow}".format(cellRow = x)] = LeftorRight(MutationPosition)
+    sheet5["A{cellRow}".format(cellRow = x)] = Patient_ID+" "+Mutation
+    sheet5["E{cellRow}".format(cellRow = x)] = Ref_Allele
+    sheet5["F{cellRow}".format(cellRow = x)] = Tumor_Seq_Allele
+    sheet5["G{cellRow}".format(cellRow = x)] = AA_Charge_Δ
+    sheet5["D{cellRow}".format(cellRow = x)] = NCPR
+    sheet5["H{cellRow}".format(cellRow = x)] = NCPR_CS
+    sheet5["I{cellRow}".format(cellRow = x)] = MonthsLeft
+    sheet5["K{cellRow}".format(cellRow = x)] = MutationPosition
+    sheet5["L{cellRow}".format(cellRow = x)] = LeftorRight(MutationPosition)
     
 # Save the spreadsheet
 workbook.save(filename="EditedDataset.xlsx")
@@ -56,6 +50,8 @@ PercentAlive(sheet,sheet4)
 
 #81 NonCom Patients
 #64 Comp Patients
+#35 CompR Patients
+#23 CompL Patients
 
 #Saves Workbook
 workbook.save(filename="EditedDataset2.xlsx")

@@ -46,13 +46,13 @@ def MutationPos(ID):
             return MutPos
     return "N/A"
 
-def CheckID(ID,sheet2):
+def CheckID(ID,sheet):
     """ Checks ID from "metastatic and primary CDR3s b" sheet
     to find match in "DNAH9". If match is found returns Reference_Allele,
     Tumor_Seq_Allele1, Tumor_Seq_Allele2
     """ 
-    for y in range(2, sheet2.max_row + 1):
-        ID2 = sheet2["A{cellRow}".format(cellRow = y)].value
+    for y in range(2, sheet.max_row + 1):
+        ID2 = sheet["A{cellRow}".format(cellRow = y)].value
         if ID == ID2:
             AminoAcids = sheet2["C{cellRow}".format(cellRow = y)].value
             Reference_Allele = AminoAcids[0]
@@ -60,7 +60,7 @@ def CheckID(ID,sheet2):
             return Reference_Allele, Tumor_Seq_Allele
     return "N/A", "N/A"
 
-def MonthsLeftFunc(ID,sheet3):
+def MonthsLeftFunc(ID):
     """Function to find the number of days a patient survived
     and return it in months. (One month equals 30 days)
     If patient is still alive it returns N/A
@@ -108,7 +108,13 @@ def MakeTrue(Patient_ID,sheet):
 def PercentAlive(sheet,sheet4):
     """Function to calculate the survival charts"""
     
-    NumPatients = 196   #Number of Patients in DNAH9
+    NumPatients = 145   #Number of Patients in DNAH9
+
+    AliveStillCompR = {} #Holds the number of patients that died on each month
+                        #from 1-500 that are complimentary on the Right of the Peptide
+    
+    AliveStillCompL = {} #Holds the number of patients that died on each month
+                        #from 1-500 that are complimentary on the Left of the Peptide
     
     AliveStillComp = {} #Holds the number of patients that died on each month
                         #from 1-500 that are complimentary
@@ -118,45 +124,61 @@ def PercentAlive(sheet,sheet4):
     x = 0
     while x < 501: #Populates both dictionaries with 0 for 1-500
         AliveStillComp[x] = 0
+        AliveStillCompR[x] = 0
+        AliveStillCompL[x] = 0
         AliveStillNon[x] = 0
         x+=1
-
+    CompPatientNumber = 0
+    CompPatientNumberL = 0
+    CompPatientNumberR = 0
+    NONCompPatientNumber = 0
     x = 2
     while x < sheet.max_row:
         Patient_ID = sheet["A{cellRow}".format(cellRow = x)].value
         MonthsLeft = sheet["I{cellRow}".format(cellRow = x)].value
         Complimentary = sheet["J{cellRow}".format(cellRow = x)].value
+        RorL = sheet["L{cellRow}".format(cellRow = x)].value
         while Patient_ID == sheet["A{cellRow}".format(cellRow = x)].value:
             x+=1 # moves to the last instance of this Patient ID
         if MonthsLeft != "'--":
             if Complimentary == True:
                 AliveStillComp[MonthsLeft] = AliveStillComp[MonthsLeft] + 1
+                CompPatientNumber += 1
+                if RorL == "Right":
+                    AliveStillCompR[MonthsLeft] = AliveStillCompR[MonthsLeft] + 1
+                    CompPatientNumberR += 1
+                elif RorL == "Left":
+                    AliveStillCompL[MonthsLeft] = AliveStillCompL[MonthsLeft] + 1
+                    CompPatientNumberL += 1
+
                 #Adds this patient to the month they died in the dictionary
                 #If they were complimentary
             elif Complimentary == False:
                 AliveStillNon[MonthsLeft] = AliveStillNon[MonthsLeft] + 1
+                NONCompPatientNumber += 1
                 #Adds this patient to the month they died in the dictionary
                 #If they were NONcomplimentary
-
-    CompCurrent = 0     #Holds the number of people currently dead
-                        #that were Complimentary
+        CompCurrent = 0
+        NonCompCurrent = 0
+        CompCurrentL = 0
+        CompCurrentR = 0
     
-    NonCompCurrent = 0  #Holds the number of people currently dead
-                        #that were Complimentary
-
     x =0    # X simulates the month
     while x <= 500:
-        CompPatientNumber = 64
-        NONCompPatientNumber = 81
         #The number of patients that are Complimentary and NonComplimentary        
         
-        CompCurrent += AliveStillComp[x] 
+        CompCurrent += AliveStillComp[x]
+        CompCurrentR += AliveStillComp[x]
+        CompCurrentL += AliveStillComp[x]
         NonCompCurrent += AliveStillNon[x]
         #Each month we add the number of people that died that
         #month to CompCurrent and NonCompCurrent
         
         sheet4["B{cellRow}".format(cellRow = x+3)] = (CompPatientNumber-CompCurrent)/CompPatientNumber*100
-        sheet4["D{cellRow}".format(cellRow = x+3)] = (NONCompPatientNumber-NonCompCurrent)/NONCompPatientNumber*100
+        sheet4["H{cellRow}".format(cellRow = x+3)] = (NONCompPatientNumber-NonCompCurrent)/NONCompPatientNumber*100
+        sheet4["D{cellRow}".format(cellRow = x+3)] = (CompPatientNumberR-CompCurrentR)/CompPatientNumberR*100
+        sheet4["F{cellRow}".format(cellRow = x+3)] = (CompPatientNumberL-CompCurrentL)/CompPatientNumberL*100
+
         #Creat percentage of people left and add to Excel File next to month Number
 
         x += 1
@@ -202,6 +224,7 @@ def PeptidesFunc(mutNumber):
             PossiblePeptides[y] = peptides[x]
             y+=1
         x += 1
+    #print(PossiblePeptides)
     return PossiblePeptides
 
 
@@ -212,50 +235,70 @@ def LeftorRight(mutNumber):
     PossiblePeptides = PeptidesFunc(mutNumber)
     LowerBound = 0
     UpperBound = 0
-    LeftorRightPre = {}
-    z = 0
-    y = 0
-    while y < len(PossiblePeptides):
-        LowerBound = PossiblePeptides[y][0]
-        UpperBound = PossiblePeptides[y][1]
+    Right = 0
+    Left = 0
+    for peptide in PossiblePeptides:
+        LowerBound = PossiblePeptides[peptide][0]
+        UpperBound = PossiblePeptides[peptide][1]
         PeptideLength = UpperBound-LowerBound
         if PeptideLength == 8:
             if mutNumber < 5+LowerBound:
-                LeftorRightPre[z] = "Left"
-                z+=1
+                Left += 1
             elif mutNumber >= 5+LowerBound:
-                LeftorRightPre[z] = "Right"
-                z+=1
+                Right += 1
         if PeptideLength == 9:
             if mutNumber < 5+LowerBound:
-                LeftorRightPre[z] = "Left"
-                z+=1
+                Left += 1
             elif mutNumber > 5+LowerBound:
-                LeftorRightPre[z] = "Right"
-                z+=1
+                Right += 1
         if PeptideLength == 10:
             if mutNumber < 6+LowerBound:
-                LeftorRightPre[z] = "Left"
-                z+=1
+                Left += 1
             elif mutNumber >= 6+LowerBound:
-                LeftorRightPre[z] = "Right"
-                z+=1
-        y+=1
-    Right = 0
-    Left = 0
-    for i in LeftorRightPre:
-        if LeftorRightPre[i] == "Right":
-            Right += 1
-        if LeftorRightPre[i] == "Left":
-            Left += 1
-    if Right > Left:
+                Right += 1
+    
+    if Right != 0 and Left == 0:
         return "Right"
-    elif Left > Right:
+    elif Left != 0 and Right == 0:
         return "Left"
-    elif Left == Right and Right != 0  and Left != 0:
-        return "Neither"
-    elif PossiblePeptides == {}:
-        return "No Peptides"
+    elif Right != 0  and Left != 0:
+        return "Both"
+    elif Right == 0 and Left == 0:
+        print("N/A")
+        return "N/A"
     else:
         print("blank")
 
+'''def Complimentary_Func(ID,AA_Charge_Δ,LorR):
+    NCPR=0
+    for x in range(2, sheet.max_row + 1):
+        ID2 = sheet["A{cellRow}".format(cellRow = x)].value
+        if ID2 == ID:
+            if LorR = "Left" and sheet["C{cellRow}".format(cellRow = x)].value == "TRA":
+                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
+                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
+                if NCPR_CS != "N/A" and NCPR_CS > 0:
+                    return "True"
+            elif LorR = "Right" and sheet["C{cellRow}".format(cellRow = x)].value == "TRB":
+                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
+                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
+                if NCPR_CS != "N/A" and NCPR_CS > 0:
+                    return "True"
+            elif LorR = "Both":
+                NCPR = CalculateNCPR(sheet["B{cellRow}".format(cellRow = x)].value)
+                NCPR_CS = Calc_NCPR_CS(AA_Charge_Δ,NCPR,ID)
+                if NCPR_CS != "N/A" and NCPR_CS > 0:
+                    return "True"
+    return "False"
+'''
+
+def ComplimentaryFunction(CDR3,Mutation):
+    '''A positive value denotes a complementary score'''
+    
+    NCPR = CalculateNCPR(CDR3)
+    AA_Charge_Δ = get_AA_charge(Mutation[0])-get_AA_charge(Mutation[len(Mutation)-1])
+    NCPR_CS = AA_Charge_Δ * NCPR * -1
+    if NCPR_CS > 0:
+        return True
+    else:
+        return False
