@@ -47,29 +47,31 @@ for Patient_ID in Major_Dictionary:
     ID_Dictionary = Major_Dictionary[Patient_ID]
     
     for Mutation in Major_Dictionary[Patient_ID]["Mutations"]:
+        done = False
         MutationSide = LeftorRight(Mutation[1:len(Mutation)-1])
         if MutationSide == "Left":
             for CDR3 in ID_Dictionary["TRA CDR3"]:
-                if ComplimentaryFunction(CDR3,Mutation) == True:
+                if ComplimentaryFunction(CDR3,Mutation) == True and done == False:
                     Major_Dictionary[Patient_ID]["Complimentary"] = True
-                    break
+                    done = True
         if MutationSide == "Right":
             for CDR3 in ID_Dictionary["TRB CDR3"]:
-                if ComplimentaryFunction(CDR3,Mutation) == True:
+                if ComplimentaryFunction(CDR3,Mutation) == True and done == False:
                     Major_Dictionary[Patient_ID]["Complimentary"] = True
-                    break
+                    done = True
         if MutationSide == "Both":
             for CDR3 in ID_Dictionary["TRA CDR3"]:
-                if ComplimentaryFunction(CDR3,Mutation) == True:
+                if ComplimentaryFunction(CDR3,Mutation) == True and done == False:
                     Major_Dictionary[Patient_ID]["Complimentary"] = True
-                    break
+                    done = True
             for CDR3 in ID_Dictionary["TRB CDR3"]:
-                if ComplimentaryFunction(CDR3,Mutation) == True:
+                if ComplimentaryFunction(CDR3,Mutation) == True and done == False:
                     Major_Dictionary[Patient_ID]["Complimentary"] = True
-                    break
+                    done = True
         if MutationSide == "N/A":
             print("No Peptides", Patient_ID, Mutation)
-print(Major_Dictionary)
+
+PercentAlive(Major_Dictionary)
 
 
 
