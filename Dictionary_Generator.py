@@ -113,8 +113,11 @@ def main(Pathway,IncludeAlive):
     return Major_Dictionary
 
 
-Major_Dictionary_Old = main("Old",False)
-Major_Dictionary = main("New",False)
+Major_Dictionary_Old = main("Old",True) #Which method, alive and dead = True dead only = false
+ExcelOutput(Major_Dictionary_Old,"Old", True) #Dictionary, Which method, alive and dead = True dead only = false
+
+Major_Dictionary = main("New",True)
+ExcelOutput(Major_Dictionary,"New", True)
 
 for Patient_ID in Major_Dictionary_Old:
     ID_1 = Major_Dictionary_Old[Patient_ID]["Patient ID"]

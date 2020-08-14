@@ -1,4 +1,4 @@
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 
 workbook = load_workbook(filename="Dataset.xlsx")
 sheet = workbook['metastatic and primary CDR3s b']
@@ -263,3 +263,97 @@ def ComplimentaryFunction(CDR3,Mutation):
         return True
     else:
         return False
+def NCPR_CS_Function(CDR3,Mutation):
+    '''A positive value denotes a complementary score'''
+    
+    NCPR = CalculateNCPR(CDR3)
+    AA_Charge_Δ = get_AA_charge(Mutation)
+    NCPR_CS = AA_Charge_Δ * NCPR * -1
+    return NCPR_CS
+
+# DataFile["{lettercode}{cellRow}".format(lettercode = 'A', cellRow = X)] = "Patient ID"
+# Clinical["B{cellRow}".format(cellRow = y)]
+workbook = load_workbook(filename="ExcelOutput.xlsx")
+DataFile = workbook['Data']
+
+def ExcelOutput(Major_Dictionary,Pathway,AliveVar):
+    
+    Alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N',
+                'O','P','Q','R','S','T','U','V','W','X','Y','Z']
+
+    x = 1
+    for Patient_ID in Major_Dictionary:
+        DataFile["A{cellRow}".format(cellRow = x)] = "Patient ID"
+        DataFile["B{cellRow}".format(cellRow = x)] = Major_Dictionary[Patient_ID]["Patient ID"]
+        x += 1
+        
+        DataFile["A{cellRow}".format(cellRow = x)] = "Months Left"
+        DataFile["B{cellRow}".format(cellRow = x)] = Major_Dictionary[Patient_ID]["Months Left"]
+        x += 1
+        
+        DataFile["A{cellRow}".format(cellRow = x)] = "Determined Complimentary"
+        DataFile["B{cellRow}".format(cellRow = x)] = Major_Dictionary[Patient_ID]["Complimentary"]
+        x += 1
+
+        ColNum = 2
+        DataFile["C{cellRow}".format(cellRow = x)] = "TRA"
+        x += 1
+        for CDR3 in Major_Dictionary[Patient_ID]["TRA CDR3"]:
+            DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x)] = CDR3
+            ColNum += 1
+        if ColNum == 2:
+            ColNum = 3
+            
+        DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum],cellRow = x-1)] = "TRB"
+        
+        TRBStart = ColNum
+        for CDR3 in Major_Dictionary[Patient_ID]["TRB CDR3"]:
+            DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x)] = CDR3
+            ColNum += 1
+
+        x += 1
+        DataFile["A{cellRow}".format(cellRow = x)] = "Mutations"
+        if Major_Dictionary[Patient_ID]["Mutations"] != []:
+            for Mutation in Major_Dictionary[Patient_ID]["Mutations"]:
+                ColNum = 2
+                DataFile["B{cellRow}".format(cellRow = x)] = Mutation
+                
+                if Pathway == "Old":
+                    MutationSide = "Both"
+                        
+                else:
+                    MutationSide = LeftorRight(Mutation[1:len(Mutation)-1])
+                    
+                if MutationSide == "Left":
+                    for CDR3 in Major_Dictionary[Patient_ID]["TRA CDR3"]:
+                        DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
+                        ColNum += 1
+                elif MutationSide == "Right":
+                    for CDR3 in Major_Dictionary[Patient_ID]["TRB CDR3"]:
+                        DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum+TRBStart-2], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
+                        ColNum += 1
+                elif MutationSide == "Both":
+                    for CDR3 in Major_Dictionary[Patient_ID]["TRA CDR3"]:
+                        DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
+                        ColNum += 1
+                    ColNum = 0
+                    for CDR3 in Major_Dictionary[Patient_ID]["TRB CDR3"]:
+                        DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum+TRBStart], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
+                        ColNum += 1
+                elif MutationSide == "N/A":
+                    print("No Peptides", Patient_ID, Mutation)
+                x += 1
+        else:
+            x += 1
+        x += 1
+
+    workbook.save(filename="ExcelOutput_{pathway}_{aliveVar}.xlsx".format(pathway = Pathway, aliveVar = AliveVar))
+
+
+
+
+
+
+    
+
+    
