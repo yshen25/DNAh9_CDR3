@@ -2,6 +2,7 @@
 
 from openpyxl import load_workbook
 from SupportFunctions import *
+import lifelines
 
 workbook = load_workbook(filename="Dataset.xlsx")
 CDR3File = workbook['metastatic and primary CDR3s b']
@@ -118,6 +119,19 @@ ExcelOutput(Major_Dictionary_Old,"Old", True) #Dictionary, Which method, alive a
 
 Major_Dictionary = main("New",True)
 ExcelOutput(Major_Dictionary,"New", True)
+
+LogRankArrayComp = []
+LogRankArrayNon = []
+
+for Patient_ID in Major_Dictionary:
+    if Major_Dictionary[Patient_ID]["Complimentary"] == True:
+        MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
+        LogRankArrayComp.append(MonthsLeft)
+    if Major_Dictionary[Patient_ID]["Complimentary"] == False:
+        MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
+        LogRankArrayNon.append(MonthsLeft)
+
+print(lifelines.statistics.logrank_test(LogRankArrayComp,LogRankArrayNon))
 
 for Patient_ID in Major_Dictionary_Old:
     ID_1 = Major_Dictionary_Old[Patient_ID]["Patient ID"]

@@ -85,7 +85,7 @@ def MonthsLeftFunc(ID):
                 daysLeft = int(Clinical["J{cellRow}".format(cellRow = y)].value)
                 return int(daysLeft/30)
             except:
-                return "N/A"
+                return 500
 
 def PercentAlive(Major_Dictionary, Pathway):
     import matplotlib.pyplot as plt
