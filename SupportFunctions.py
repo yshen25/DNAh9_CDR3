@@ -1,4 +1,5 @@
 from openpyxl import load_workbook, Workbook
+import lifelines
 
 workbook = load_workbook(filename="Dataset.xlsx")
 sheet = workbook['metastatic and primary CDR3s b']
@@ -341,7 +342,8 @@ def ExcelOutput(Major_Dictionary,Pathway,AliveVar):
                         DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum+TRBStart], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
                         ColNum += 1
                 elif MutationSide == "N/A":
-                    print("No Peptides", Patient_ID, Mutation)
+                    #print("No Peptides", Patient_ID, Mutation)
+                    _=0
                 x += 1
         else:
             x += 1
@@ -349,7 +351,25 @@ def ExcelOutput(Major_Dictionary,Pathway,AliveVar):
 
     workbook.save(filename="ExcelOutput_{pathway}_{aliveVar}.xlsx".format(pathway = Pathway, aliveVar = AliveVar))
 
+def LogRankTest(Major_Dictionary,Pathway):
+    LogRankArrayComp = []
+    LogRankArrayNon = []
 
+    for Patient_ID in Major_Dictionary:
+        if Major_Dictionary[Patient_ID]["Complimentary"] == True:
+            MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
+            LogRankArrayComp.append(MonthsLeft)
+        if Major_Dictionary[Patient_ID]["Complimentary"] == False:
+            MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
+            LogRankArrayNon.append(MonthsLeft)
+
+    results = lifelines.statistics.logrank_test(LogRankArrayComp,LogRankArrayNon)
+    print("")
+    print("<----------------------->")
+    print(Pathway)
+    print("<----------------------->")
+    print("")
+    results.print_summary()
 
 
 

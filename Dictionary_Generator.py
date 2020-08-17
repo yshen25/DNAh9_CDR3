@@ -105,33 +105,20 @@ def main(Pathway,IncludeAlive):
                     if ComplimentaryFunction(CDR3,Mutation) == True and Major_Dictionary[Patient_ID]["Complimentary"] == False:
                         Major_Dictionary[Patient_ID]["Complimentary"] = True
             elif MutationSide == "N/A":
-                print("No Peptides", Patient_ID, Mutation)
+                #print("No Peptides", Patient_ID, Mutation)
+                _=0
             #
             ######
 
     PercentAlive(Major_Dictionary,Pathway)
+    ExcelOutput(Major_Dictionary,Pathway, True)
+    LogRankTest(Major_Dictionary,Pathway)
 
     return Major_Dictionary
 
-
-Major_Dictionary_Old = main("Old",True) #Which method, alive and dead = True dead only = false
-ExcelOutput(Major_Dictionary_Old,"Old", True) #Dictionary, Which method, alive and dead = True dead only = false
-
+'''Code to run main function with Alive included''' 
+Major_Dictionary_Old = main("Old",True)
 Major_Dictionary = main("New",True)
-ExcelOutput(Major_Dictionary,"New", True)
-
-LogRankArrayComp = []
-LogRankArrayNon = []
-
-for Patient_ID in Major_Dictionary:
-    if Major_Dictionary[Patient_ID]["Complimentary"] == True:
-        MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
-        LogRankArrayComp.append(MonthsLeft)
-    if Major_Dictionary[Patient_ID]["Complimentary"] == False:
-        MonthsLeft = Major_Dictionary[Patient_ID]["Months Left"]
-        LogRankArrayNon.append(MonthsLeft)
-
-print(lifelines.statistics.logrank_test(LogRankArrayComp,LogRankArrayNon))
 
 for Patient_ID in Major_Dictionary_Old:
     ID_1 = Major_Dictionary_Old[Patient_ID]["Patient ID"]
