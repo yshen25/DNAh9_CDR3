@@ -86,9 +86,9 @@ def MonthsLeftFunc(ID):
                 daysLeft = int(Clinical["J{cellRow}".format(cellRow = y)].value)
                 return int(daysLeft/30)
             except:
-                return 500
+                return "N/A"
 
-def PercentAlive(Major_Dictionary, Pathway):
+def PercentAlive(Major_Dictionary,Major_Dictionary2, Pathway):
     import matplotlib.pyplot as plt
     
     """Function to calculate the survival charts"""
@@ -125,23 +125,65 @@ def PercentAlive(Major_Dictionary, Pathway):
         if x < 150:
             percentAlive = 100*AliveStillComp/totalCompPatientNumber
             #plt.scatter(int(x),percentAlive,marker = 'o',c='blue',linestyle='-')
-            plt.plot(int(x),percentAlive, '.b-')
+            plt.plot(int(x),percentAlive, '.y-')
             AliveStillComp -= DeathsPerMonth_Comp[x]
     for x in DeathsPerMonth_Non:
         if x < 150:
             percentAlive = 100*AliveStillNon/totalNonPatientNumber
             #plt.scatter(int(x),percentAlive, c = 'red')
-            plt.plot(int(x),percentAlive, '.r-')
+            plt.plot(int(x),percentAlive, '.g-')
             AliveStillNon -= DeathsPerMonth_Non[x]
-    plt.plot(0,100, c='blue', label="Complimentary")
-    plt.plot(0,100, c='red', label="NonComplimentary")
+    plt.plot(0,100, c='yellow', label="Complimentary")
+    plt.plot(0,100, c='red', label="Complimentary - Old")
+    plt.plot(0,100, c='green', label="NonComplimentary")
+    plt.plot(0,100, c='blue', label="NonComplimentary - Old")
     plt.legend(loc="upper right")
     plt.xlabel('Months Passed')
     plt.ylabel('Percent Alive')
-    if Pathway == "Old":
-        plt.title('Old Method')
-    elif Pathway == "New":
-        plt.title('New Method')
+    plt.title("{methodHere} Method".format(methodHere = Pathway))
+
+    Major_Dictionary = Major_Dictionary2
+
+    DeathsPerMonth_Comp = {} #Holds the number of patients that died on each month
+                        #from 1-500 that are complimentary
+    
+    DeathsPerMonth_Non = {}  #Holds the number of patients that died on each month
+                        #from 1-500 that are NONcomplimentary
+    x = 0
+    while x < 501: #Populates both dictionaries with 0 for 1-500
+        DeathsPerMonth_Comp[x] = 0
+        DeathsPerMonth_Non[x] = 0
+        x+=1
+    
+    totalCompPatientNumber = 0
+    totalNonPatientNumber = 0
+
+    for Patient_ID in Major_Dictionary:        
+        Complimentary = Major_Dictionary[Patient_ID]["Complimentary"]
+        try:
+            MonthsLeft = int(Major_Dictionary[Patient_ID]["Months Left"])
+        except Exception as e:
+            MonthsLeft = 500 # something at the end of the range of the chart
+        if Complimentary == True:
+            totalCompPatientNumber += 1
+            DeathsPerMonth_Comp[MonthsLeft] += 1
+        if Complimentary == False:
+            totalNonPatientNumber += 1
+            DeathsPerMonth_Non[MonthsLeft] += 1
+    AliveStillComp = totalCompPatientNumber
+    AliveStillNon = totalNonPatientNumber
+    for x in DeathsPerMonth_Comp:
+        if x < 150:
+            percentAlive = 100*AliveStillComp/totalCompPatientNumber
+            #plt.scatter(int(x),percentAlive,marker = 'o',c='blue',linestyle='-')
+            plt.plot(int(x),percentAlive, '.r-')
+            AliveStillComp -= DeathsPerMonth_Comp[x]
+    for x in DeathsPerMonth_Non:
+        if x < 150:
+            percentAlive = 100*AliveStillNon/totalNonPatientNumber
+            #plt.scatter(int(x),percentAlive, c = 'red')
+            plt.plot(int(x),percentAlive, '.b-')
+            AliveStillNon -= DeathsPerMonth_Non[x]
     plt.show()
 
 def peptideClevage():
@@ -259,7 +301,11 @@ def ComplimentaryFunction(CDR3,Mutation):
     
     NCPR = CalculateNCPR(CDR3)
     AA_Charge_Δ = get_AA_charge(Mutation)
-    NCPR_CS = AA_Charge_Δ * NCPR * -1
+    if AA_Charge_Δ != 0: # 0 Exluded
+        NCPR_CS = AA_Charge_Δ * NCPR * -1
+    else:
+        NCPR_CS = NCPR * -1
+    #NCPR_CS = AA_Charge_Δ * NCPR * -1
     if NCPR_CS > 0:
         return True
     else:
@@ -269,9 +315,12 @@ def NCPR_CS_Function(CDR3,Mutation):
     
     NCPR = CalculateNCPR(CDR3)
     AA_Charge_Δ = get_AA_charge(Mutation)
-    NCPR_CS = AA_Charge_Δ * NCPR * -1
+    if AA_Charge_Δ != 0: # 0 Exluded
+        NCPR_CS = AA_Charge_Δ * NCPR * -1
+    else:
+        NCPR_CS = NCPR * -1
+    #NCPR_CS = AA_Charge_Δ * NCPR * -1
     return NCPR_CS
-
 # DataFile["{lettercode}{cellRow}".format(lettercode = 'A', cellRow = X)] = "Patient ID"
 # Clinical["B{cellRow}".format(cellRow = y)]
 workbook = load_workbook(filename="ExcelOutput.xlsx")
@@ -327,6 +376,7 @@ def ExcelOutput(Major_Dictionary,Pathway,AliveVar):
                     
                 if MutationSide == "Left":
                     for CDR3 in Major_Dictionary[Patient_ID]["TRA CDR3"]:
+                        print(Patient_ID,Mutation,"{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x))
                         DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
                         ColNum += 1
                 elif MutationSide == "Right":
@@ -342,7 +392,7 @@ def ExcelOutput(Major_Dictionary,Pathway,AliveVar):
                         DataFile["{lettercode}{cellRow}".format(lettercode = Alphabet[ColNum+TRBStart], cellRow = x)] = NCPR_CS_Function(CDR3,Mutation)
                         ColNum += 1
                 elif MutationSide == "N/A":
-                    #print("No Peptides", Patient_ID, Mutation)
+                    print("No Peptides", Patient_ID, Mutation)
                     _=0
                 x += 1
         else:
@@ -371,9 +421,3 @@ def LogRankTest(Major_Dictionary,Pathway):
     print("")
     results.print_summary()
 
-
-
-
-    
-
-    

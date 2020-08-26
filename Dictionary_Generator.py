@@ -49,6 +49,8 @@ def main(Pathway,IncludeAlive):
                     Major_Dictionary[Patient_ID]["Months Left"] = MonthsLeft
                     
             elif IncludeAlive == True:
+                if MonthsLeft == "N/A":
+                    MonthsLeft = 500
                 Major_Dictionary[Patient_ID] = {"Patient ID":Patient_ID,"TRA CDR3":[], "TRB CDR3":[],
                 "Mutations": [], "Months Left": False, "Complimentary": False,
                 "Method":"new"}
@@ -75,7 +77,7 @@ def main(Pathway,IncludeAlive):
             ######
             #    Marks all Mutations with peptides as both so calculations
             #    occur with both TRA and TRB CDR3's
-            if Pathway == "Old":
+            if Pathway == "Old" and LeftorRight(Mutation[1:len(Mutation)-1]) != "N/A":
                 MutationSide = "Both"
             #
             ######
@@ -90,6 +92,7 @@ def main(Pathway,IncludeAlive):
             #   combo happens
             #
             if MutationSide == "Left":
+                #print(Patient_ID,Mutation)
                 for CDR3 in Major_Dictionary[Patient_ID]["TRA CDR3"]:
                     if ComplimentaryFunction(CDR3,Mutation) == True and Major_Dictionary[Patient_ID]["Complimentary"] == False:
                         Major_Dictionary[Patient_ID]["Complimentary"] = True
@@ -109,8 +112,7 @@ def main(Pathway,IncludeAlive):
                 _=0
             #
             ######
-
-    PercentAlive(Major_Dictionary,Pathway)
+            
     ExcelOutput(Major_Dictionary,Pathway, True)
     LogRankTest(Major_Dictionary,Pathway)
 
@@ -119,6 +121,8 @@ def main(Pathway,IncludeAlive):
 '''Code to run main function with Alive included''' 
 Major_Dictionary_Old = main("Old",True)
 Major_Dictionary = main("New",True)
+
+PercentAlive(Major_Dictionary,Major_Dictionary_Old,"Both")
 
 for Patient_ID in Major_Dictionary_Old:
     ID_1 = Major_Dictionary_Old[Patient_ID]["Patient ID"]
